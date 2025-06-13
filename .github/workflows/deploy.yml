@@ -3,11 +3,17 @@ name: 🚀 Deploy to VPS
 on:
   push:
     branches:
-      - main  # or your deployment branch
+      - main
+
+env:
+  NODE_ENV: production
+  DEPLOY_HOST: 136.144.169.158
+  DEPLOY_USER: ruud
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
     - name: 📥 Checkout code
@@ -18,14 +24,73 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
+    - name: 🗃️ Cache node modules
+      uses: actions/cache@v3
+      with:
+        path: frontend/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: 💾 Backup Current Version
+      run: |
+        ssh -o StrictHostKeyChecking=no ruud@136.144.169.158 << 'EOF'
+          timestamp=$(date +%Y%m%d_%H%M%S)
+          sudo cp -r /var/www/ruudjuffermans.nl /var/www/ruudjuffermans.nl_backup_$timestamp
+        EOF
+
     - name: 🚀 Deploy via SSH
       run: |
         ssh -o StrictHostKeyChecking=no ruud@136.144.169.158 << 'EOF'
+          set -e
+
+          echo "📁 Cloning or updating repo"
           cd /home/ruud
           if [ ! -d "www.ruudjuffermans.nl/.git" ]; then
             git clone https://github.com/ruud-ctrl/www.ruudjuffermans.nl.git
-          else
-            cd www.ruudjuffermans.nl
-            git pull origin main
           fi
+
+          cd www.ruudjuffermans.nl
+          git pull origin main
+
+          echo "⚙️ Building frontend"
+          cd frontend
+          npm ci
+          npm run build
+
+          echo "🚀 Deploying frontend to Nginx"
+          sudo rm -rf /var/www/ruudjuffermans.nl/*
+          sudo cp -r dist/* /var/www/ruudjuffermans.nl/
+
+          echo "🔄 Reloading Nginx"
+          sudo nginx -t && sudo systemctl reload nginx
         EOF
+
+    - name: 🏥 Health Check
+      run: |
+        for i in {1..5}; do
+          if curl -f https://ruudjuffermans.nl/; then
+            echo "Health check passed!"
+            exit 0
+          fi
+          echo "Attempt $i failed, retrying in 10 seconds..."
+          sleep 10
+        done
+        echo "Health check failed after 5 attempts"
+        exit 1
+
+    - name: 🏷️ Tag Version
+      run: |
+        VERSION=$(date +%Y.%m.%d-%H%M%S)
+        git tag "deploy-$VERSION"
+        git push origin "deploy-$VERSION"
+
+    - name: 🔔 Notify on Success
+      if: success()
+      run: |
+        echo "Deployment successful! Version: deploy-$VERSION"
+
+    - name: 🔔 Notify on Failure
+      if: failure()
+      run: |
+        echo "Deployment failed! Check the logs for details."
