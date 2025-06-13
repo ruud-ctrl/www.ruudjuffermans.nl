@@ -1,0 +1,26 @@
+name: 🚀 Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  # or your deployment branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+
+    - name: 🔐 Set up SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+    - name: 🚀 Deploy via SSH
+      run: |
+        ssh -o StrictHostKeyChecking=no ruud@136.144.169.158 << 'EOF'
+          mkdir -p /home/ruud/www.ruudjuffermans.nl && cd /home/ruud/www.ruudjuffermans.nl
+          git pull origin main
+        EOF
