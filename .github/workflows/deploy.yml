@@ -21,6 +21,11 @@ jobs:
     - name: 🚀 Deploy via SSH
       run: |
         ssh -o StrictHostKeyChecking=no ruud@136.144.169.158 << 'EOF'
-          mkdir -p /home/ruud/www.ruudjuffermans.nl && cd /home/ruud/www.ruudjuffermans.nl
-          git pull origin main
+          cd /home/ruud
+          if [ ! -d "www.ruudjuffermans.nl/.git" ]; then
+            git clone https://github.com/ruud-ctrl/www.ruudjuffermans.nl.git
+          else
+            cd www.ruudjuffermans.nl
+            git pull origin main
+          fi
         EOF
