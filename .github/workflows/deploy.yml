@@ -67,12 +67,6 @@ jobs:
           sudo nginx -t && sudo systemctl reload nginx
         EOF
 
-    - name: 🏷️ Tag Version
-      run: |
-        VERSION=$(date +%Y.%m.%d-%H%M%S)
-        git tag "deploy-$VERSION"
-        git push origin "deploy-$VERSION"
-
     - name: 🔔 Notify on Success
       if: success()
       run: |
