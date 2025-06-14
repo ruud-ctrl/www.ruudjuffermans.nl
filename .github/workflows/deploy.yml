@@ -55,6 +55,8 @@ jobs:
 
           echo "⚙️ Building frontend"
           cd frontend
+          node -v
+          npm -v
           npm ci
           echo "hit!"
           npm run build
