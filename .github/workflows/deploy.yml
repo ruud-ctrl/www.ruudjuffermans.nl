@@ -55,10 +55,12 @@ jobs:
 
           echo "⚙️ Building frontend"
           cd frontend
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm use 18
           node -v
           npm -v
           npm ci
-          echo "hit!"
           npm run build
 
           echo "🚀 Deploying frontend to Nginx"
