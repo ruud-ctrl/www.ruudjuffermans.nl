@@ -12,9 +12,7 @@ function App() {
     <div>
       <h1>Users</h1>
       <ul>
-        {users.map((u) => (
-          <li key={u}>{u}</li>
-        ))}
+        {console.log(users)}
       </ul>
     </div>
   );
