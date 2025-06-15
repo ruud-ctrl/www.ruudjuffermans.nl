@@ -1,4 +1,4 @@
-name: 🚀 Deploy to VPS
+name: Deploy to VPS
 
 on:
   push:
@@ -16,10 +16,10 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: 🔐 Set up SSH
+    - name: Set up SSH
       uses: webfactory/ssh-agent@v0.9.0
       with:
         ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
@@ -32,19 +32,19 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-
 
-    - name: 💾 Backup Current Version
+    - name: Backup Current Version
       run: |
         ssh -o StrictHostKeyChecking=no ruud@136.144.169.158 << 'EOF'
           timestamp=$(date +%Y%m%d_%H%M%S)
           sudo cp -r /var/www/ruudjuffermans.nl /var/www/ruudjuffermans.nl_backup_$timestamp
         EOF
 
-    - name: 🚀 Deploy via SSH
+    - name: Deploy via SSH
       run: |
         ssh -o StrictHostKeyChecking=no ruud@136.144.169.158 << 'EOF'
           set -e
 
-          echo "📁 Cloning or updating repo"
+          echo "Cloning or updating repo"
           cd /home/ruud
           if [ ! -d "www.ruudjuffermans.nl/.git" ]; then
             git clone https://github.com/ruud-ctrl/www.ruudjuffermans.nl.git
@@ -63,20 +63,27 @@ jobs:
           npm ci
           npm run build
 
-          echo "🚀 Deploying frontend to Nginx"
+          echo "Deploying frontend to Nginx"
           sudo rm -rf /var/www/ruudjuffermans.nl/*
           sudo cp -r dist/* /var/www/ruudjuffermans.nl/
 
-          echo "🔄 Reloading Nginx"
+          echo "Setting up backend"
+          cd ../backend
+          npm ci
+
+          echo "Restarting backend service"
+          sudo systemctl restart ruudjuffermans-backend.service
+
+          echo "Reloading Nginx"
           sudo nginx -t && sudo systemctl reload nginx
         EOF
 
-    - name: 🔔 Notify on Success
+    - name: Notify on Success
       if: success()
       run: |
         echo "Deployment successful! Version: deploy-$VERSION"
 
-    - name: 🔔 Notify on Failure
+    - name: Notify on Failure
       if: failure()
       run: |
         echo "Deployment failed! Check the logs for details."

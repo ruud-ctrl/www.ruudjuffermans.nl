@@ -6,19 +6,24 @@ import cors from "cors";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors({
-  origin: "*", // Or use your frontend origin: "http://localhost:5173"
+  origin: "http://localhost:3000",
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(express.json());
 
-app.get("/api/users", async (req, res) => {
+app.get("/", async (req, res) => {
   // const { rows } = await db.query("SELECT * FROM users");
-  res.json({key : "val"});
+  res.json({status: "healthy"});
+});
+
+app.get("/api/todos", async (req, res) => {
+  res.json([{id: 1, title: "hello"}]); // of: res.json({ todos: [] });
 });
 
 app.listen(PORT, () => {

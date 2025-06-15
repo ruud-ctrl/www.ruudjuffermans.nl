@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { ColorModeContext, useMode } from "./theme";
+import Router from "@router";
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
-  const [users, setUsers] = useState([]);
+  const [theme, colorMode] = useMode();
 
-  useEffect(() => {
-    fetch(`http://localhost:3002/api/users`)
-      .then((res) => res.json())
-      .then(setUsers);
-  }, []);
   return (
-    <div>
-      <h1>Users</h1>
-      <ul>
-        {console.log(users)}
-      </ul>
-    </div>
+    <ColorModeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AuthProvider>
+          <Router/>
+        </AuthProvider>
+      </ThemeProvider>
+    </ColorModeContext.Provider>
   );
 }
 
